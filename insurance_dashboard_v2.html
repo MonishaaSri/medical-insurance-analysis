@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical Insurance Cost Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#0D0F14; --surface:#13161E; --surface2:#1A1E29; --border:#252A38;
+    --text:#E8EAF0; --muted:#6B7280;
+    --red:#FF6B6B; --blue:#4ECDC4; --green:#6BCB77; --purple:#A78BFA; --orange:#FF9F43; --yellow:#FFE66D;
+  }
+  body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+  .wrapper { padding:2.5rem 2rem; max-width:1400px; margin:0 auto; }
+
+  /* HEADER */
+  .header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:2.5rem; padding-bottom:2rem; border-bottom:1px solid var(--border); }
+  .tag { font-family:'DM Mono',monospace; font-size:0.68rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--red); margin-bottom:0.6rem; display:flex; align-items:center; gap:8px; }
+  .tag::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--red); display:inline-block; animation:blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  h1 { font-family:'Playfair Display',serif; font-size:3rem; font-weight:900; letter-spacing:-0.03em; line-height:1; }
+  h1 span { color:var(--red); }
+  .header-stats { text-align:right; }
+  .hstat { font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--muted); line-height:2.1; }
+  .hstat b { color:var(--text); }
+
+  /* KPI */
+  .kpi-row { display:grid; grid-template-columns:repeat(6,1fr); gap:1rem; margin-bottom:1.5rem; }
+  .kpi { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.3rem 1.2rem; position:relative; overflow:hidden; transition:transform 0.2s,border-color 0.2s; }
+  .kpi:hover { transform:translateY(-3px); border-color:#3a3f52; }
+  .kpi::after { content:''; position:absolute; top:0; left:0; right:0; height:2.5px; border-radius:2px 2px 0 0; }
+  .kpi.r::after{background:var(--red)} .kpi.b::after{background:var(--blue)} .kpi.g::after{background:var(--green)} .kpi.y::after{background:var(--yellow)} .kpi.p::after{background:var(--purple)} .kpi.o::after{background:var(--orange)}
+  .kpi-icon { font-size:1.3rem; margin-bottom:0.5rem; display:block; }
+  .kpi-lbl { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:0.35rem; }
+  .kpi-val { font-family:'Playfair Display',serif; font-size:1.75rem; font-weight:700; line-height:1; margin-bottom:0.3rem; }
+  .kpi-sub { font-size:0.7rem; color:var(--muted); }
+  .kpi-sub b { color:var(--blue); }
+
+  /* SECTION */
+  .sec { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin:2rem 0 1rem; display:flex; align-items:center; gap:12px; }
+  .sec::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  /* INSIGHT STRIP */
+  .insights { display:grid; grid-template-columns:repeat(5,1fr); gap:1rem; margin-bottom:1.5rem; }
+  .ins { background:var(--surface2); border:1px solid var(--border); border-radius:14px; padding:1.1rem; }
+  .ins-num { font-family:'Playfair Display',serif; font-size:1.55rem; font-weight:700; line-height:1; margin-bottom:0.3rem; }
+  .ins-lbl { font-size:0.73rem; color:var(--muted); line-height:1.5; }
+
+  /* GRID LAYOUTS */
+  .g3 { display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; margin-bottom:1.2rem; }
+  .g2 { display:grid; grid-template-columns:repeat(2,1fr); gap:1.2rem; margin-bottom:1.2rem; }
+  .g21 { display:grid; grid-template-columns:2fr 1fr; gap:1.2rem; margin-bottom:1.2rem; }
+  .g4 { display:grid; grid-template-columns:repeat(4,1fr); gap:1.2rem; margin-bottom:1.2rem; }
+
+  /* CARD */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.4rem; transition:border-color 0.2s; }
+  .card:hover { border-color:#353a4a; }
+  .ch { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.2rem; }
+  .ct { font-family:'DM Mono',monospace; font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+  .badge { font-family:'DM Mono',monospace; font-size:0.58rem; padding:2px 9px; border-radius:20px; }
+  .bn { background:#182818; color:var(--green); border:1px solid #2a4a2a; }
+  .bf { background:#281818; color:var(--red);   border:1px solid #4a2a2a; }
+  .bk { background:#18182a; color:var(--purple); border:1px solid #2a2a4a; }
+  .bo { background:#28200e; color:var(--orange); border:1px solid #4a3a1a; }
+
+  .cw  { position:relative; width:100%; height:220px; }
+  .cwl { position:relative; width:100%; height:290px; }
+  .cws { position:relative; width:100%; height:175px; }
+
+  /* CORR BARS */
+  .corr-list { display:flex; flex-direction:column; gap:12px; }
+  .ci-top { display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.78rem; }
+  .ci-name { color:var(--text); font-weight:500; }
+  .ci-val  { font-family:'DM Mono',monospace; font-size:0.7rem; }
+  .cbar-bg { height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .cbar    { height:100%; border-radius:3px; }
+
+  /* FOOTER */
+  .footer { margin-top:2.5rem; padding-top:1.5rem; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .ft { font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--muted); }
+  .dots { display:flex; gap:6px; }
+  .dot { width:8px; height:8px; border-radius:50%; }
+
+  /* ANIMATE */
+  .fade { opacity:0; transform:translateY(18px); animation:fi 0.6s ease forwards; }
+  @keyframes fi { to { opacity:1; transform:translateY(0); } }
+  .fade:nth-child(1){animation-delay:.05s} .fade:nth-child(2){animation-delay:.10s}
+  .fade:nth-child(3){animation-delay:.15s} .fade:nth-child(4){animation-delay:.20s}
+  .fade:nth-child(5){animation-delay:.25s} .fade:nth-child(6){animation-delay:.30s}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<!-- HEADER -->
+<header class="header fade">
+  <div>
+    <div class="tag">Medical Insurance · USA · Data Analysis Project</div>
+    <h1>Insurance <span>Cost</span><br>Analysis</h1>
+  </div>
+  <div class="header-stats">
+    <div class="hstat">Total Records &nbsp;<b>1,337</b></div>
+    <div class="hstat">Total Columns &nbsp;<b>7</b></div>
+    <div class="hstat">Missing Values &nbsp;<b>0</b></div>
+    <div class="hstat">Duplicates Removed &nbsp;<b>1</b></div>
+    <div class="hstat">Age Range &nbsp;<b>18 – 64 years</b></div>
+    <div class="hstat">BMI Range &nbsp;<b>15.96 – 53.13</b></div>
+  </div>
+</header>
+
+<!-- KPI CARDS -->
+<div class="kpi-row">
+  <div class="kpi r fade"><span class="kpi-icon">💰</span><div class="kpi-lbl">Avg Charges</div><div class="kpi-val">$13,279</div><div class="kpi-sub">median <b>$9,386</b></div></div>
+  <div class="kpi b fade"><span class="kpi-icon">🚬</span><div class="kpi-lbl">Smoker Avg</div><div class="kpi-val">$32,050</div><div class="kpi-sub"><b>280%</b> above non-smoker</div></div>
+  <div class="kpi g fade"><span class="kpi-icon">🫁</span><div class="kpi-lbl">Non-Smoker Avg</div><div class="kpi-val">$8,441</div><div class="kpi-sub"><b>1,063</b> people · 79.5%</div></div>
+  <div class="kpi y fade"><span class="kpi-icon">📈</span><div class="kpi-lbl">Max Charge</div><div class="kpi-val">$63,770</div><div class="kpi-sub">min <b>$1,122</b></div></div>
+  <div class="kpi p fade"><span class="kpi-icon">⚖️</span><div class="kpi-lbl">Avg BMI</div><div class="kpi-val">30.66</div><div class="kpi-sub"><b>52.6%</b> are obese</div></div>
+  <div class="kpi o fade"><span class="kpi-icon">📊</span><div class="kpi-lbl">Std Deviation</div><div class="kpi-val">$12,110</div><div class="kpi-sub">avg age <b>39.2 yrs</b></div></div>
+</div>
+
+<!-- INSIGHTS -->
+<div class="sec">Key Findings</div>
+<div class="insights">
+  <div class="ins fade"><div class="ins-num" style="color:var(--red)">0.787</div><div class="ins-lbl">Smoker correlation with charges — strongest predictor</div></div>
+  <div class="ins fade"><div class="ins-num" style="color:var(--orange)">$23,610</div><div class="ins-lbl">Extra cost smokers pay vs non-smokers on average</div></div>
+  <div class="ins fade"><div class="ins-num" style="color:var(--blue)">Southeast</div><div class="ins-lbl">Most expensive region at $14,735 average charges</div></div>
+  <div class="ins fade"><div class="ins-num" style="color:var(--green)">83%</div><div class="ins-lbl">More seniors pay vs young adults — $17,200 vs $9,415</div></div>
+  <div class="ins fade"><div class="ins-num" style="color:var(--purple)">$41,693</div><div class="ins-lbl">Obese smoker avg — highest risk group in dataset</div></div>
+</div>
+
+<!-- ROW 1 -->
+<div class="sec">Smoking & Regional Analysis</div>
+<div class="g3">
+  <div class="card fade">
+    <div class="ch"><div class="ct">Smoker vs Avg Charges</div><span class="badge bk">KEY FACTOR</span></div>
+    <div class="cw"><canvas id="c1"></canvas></div>
+  </div>
+  <div class="card fade">
+    <div class="ch"><div class="ct">Avg Charges by Region</div><span class="badge bo">SORTED</span></div>
+    <div class="cw"><canvas id="c2"></canvas></div>
+  </div>
+  <div class="card fade">
+    <div class="ch"><div class="ct">Smoker × Region Combo</div><span class="badge bn">NEW</span></div>
+    <div class="cw"><canvas id="c3"></canvas></div>
+  </div>
+</div>
+
+<!-- ROW 2 -->
+<div class="sec">BMI & Age Group Analysis</div>
+<div class="g2">
+  <div class="card fade">
+    <div class="ch"><div class="ct">BMI Category vs Avg Charges</div><span class="badge bn">NEW</span></div>
+    <div class="cw"><canvas id="c4"></canvas></div>
+  </div>
+  <div class="card fade">
+    <div class="ch"><div class="ct">Age Group vs Avg Charges</div><span class="badge bn">NEW</span></div>
+    <div class="cw"><canvas id="c5"></canvas></div>
+  </div>
+</div>
+
+<!-- ROW 3 -->
+<div class="sec">Gender, Children & Distribution</div>
+<div class="g3">
+  <div class="card fade">
+    <div class="ch"><div class="ct">Sex vs Charges by Smoker</div><span class="badge bn">NEW</span></div>
+    <div class="cw"><canvas id="c6"></canvas></div>
+  </div>
+  <div class="card fade">
+    <div class="ch"><div class="ct">Children vs Avg Charges</div><span class="badge bn">NEW</span></div>
+    <div class="cw"><canvas id="c7"></canvas></div>
+  </div>
+  <div class="card fade">
+    <div class="ch"><div class="ct">Gender Distribution</div><span class="badge bo">PEOPLE</span></div>
+    <div class="cw"><canvas id="c8"></canvas></div>
+  </div>
+</div>
+
+<!-- ROW 4 -->
+<div class="sec">Advanced Combination Analysis</div>
+<div class="g2">
+  <div class="card fade">
+    <div class="ch"><div class="ct">Smoker × BMI Category — Worst Combo</div><span class="badge bn">NEW</span></div>
+    <div class="cwl"><canvas id="c9"></canvas></div>
+  </div>
+  <div class="card fade">
+    <div class="ch"><div class="ct">Correlation with Charges (Fixed)</div><span class="badge bf">FIXED</span></div>
+    <div class="corr-list" id="corrList"></div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div class="ct" style="margin-bottom:12px">Smoker Distribution</div>
+      <div class="cws"><canvas id="c10"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="ft">Medical Insurance Cost Analysis &nbsp;·&nbsp; 1,337 records &nbsp;·&nbsp; Tools: Excel + MySQL + Python (Colab)</div>
+  <div class="dots">
+    <div class="dot" style="background:var(--red)"></div>
+    <div class="dot" style="background:var(--blue)"></div>
+    <div class="dot" style="background:var(--green)"></div>
+    <div class="dot" style="background:var(--purple)"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+Chart.defaults.color = '#6B7280';
+Chart.defaults.font.family = "'Outfit', sans-serif";
+Chart.defaults.font.size = 11;
+const f2 = v => '$' + Math.round(v/1000) + 'K';
+const tip = v => ' $' + v.toLocaleString();
+
+// C1 Smoker bar
+new Chart(document.getElementById('c1'),{type:'bar',data:{labels:['Smoker','Non-Smoker'],datasets:[{data:[32050,8441],backgroundColor:['rgba(255,107,107,.85)','rgba(78,205,196,.85)'],borderRadius:10,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>tip(c.raw)}}},scales:{y:{ticks:{callback:f2},grid:{color:'#1e2230'},border:{display:false}},x:{grid:{display:false},border:{display:false}}}}});
+
+// C2 Region bar
+new Chart(document.getElementById('c2'),{type:'bar',data:{labels:['Southeast','Northeast','Northwest','Southwest'],datasets:[{data:[14735,13406,12451,12347],backgroundColor:['rgba(255,159,67,.85)','rgba(167,139,250,.85)','rgba(107,203,119,.85)','rgba(78,205,196,.85)'],borderRadius:10,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>tip(c.raw)}}},scales:{y:{ticks:{callback:f2},grid:{color:'#1e2230'},border:{display:false},min:10000},x:{grid:{display:false},border:{display:false}}}}});
+
+// C3 Smoker x Region
+new Chart(document.getElementById('c3'),{type:'bar',data:{labels:['NE','NW','SE','SW'],datasets:[{label:'Smoker',data:[29674,30192,34845,32269],backgroundColor:'rgba(255,107,107,.85)',borderRadius:6},{label:'Non-Smoker',data:[9166,8582,8032,8019],backgroundColor:'rgba(78,205,196,.85)',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#9CA3AF',boxWidth:10,boxHeight:10}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': $'+c.raw.toLocaleString()}}},scales:{y:{ticks:{callback:f2},grid:{color:'#1e2230'},border:{display:false}},x:{grid:{display:false},border:{display:false}}}}});
+
+// C4 BMI Category
+new Chart(document.getElementById('c4'),{type:'bar',data:{labels:['Underweight','Normal','Overweight','Obese'],datasets:[{data:[8658,10435,10998,15581],backgroundColor:['rgba(107,203,119,.9)','rgba(78,205,196,.9)','rgba(255,159,67,.9)','rgba(255,107,107,.9)'],borderRadius:10,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>tip(c.raw)}}},scales:{y:{ticks:{callback:f2},grid:{color:'#1e2230'},border:{display:false}},x:{grid:{display:false},border:{display:false}}}}});
+
+// C5 Age Group
+new Chart(document.getElementById('c5'),{type:'bar',data:{labels:['Young (18-30)','Middle (31-45)','Senior (46-64)'],datasets:[{data:[9415,12647,17200],backgroundColor:['rgba(167,139,250,.5)','rgba(167,139,250,.75)','rgba(167,139,250,1)'],borderRadius:10,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>tip(c.raw)}}},scales:{y:{ticks:{callback:f2},grid:{color:'#1e2230'},border:{display:false}},x:{grid:{display:false},border:{display:false}}}}});
+
+// C6 Sex x Smoker
+new Chart(document.getElementById('c6'),{type:'bar',data:{labels:['Female','Male'],datasets:[{label:'Smoker',data:[30679,33042],backgroundColor:'rgba(255,107,107,.85)',borderRadius:6},{label:'Non-Smoker',data:[8762,8100],backgroundColor:'rgba(78,205,196,.85)',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#9CA3AF',boxWidth:10,boxHeight:10}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': $'+c.raw.toLocaleString()}}},scales:{y:{ticks:{callback:f2},grid:{color:'#1e2230'},border:{display:false}},x:{grid:{display:false},border:{display:false}}}}});
+
+// C7 Children
+new Chart(document.getElementById('c7'),{type:'bar',data:{labels:['0','1','2','3','4','5'],datasets:[{data:[12385,12731,15074,15355,13851,8786],backgroundColor:['rgba(78,205,196,.4)','rgba(78,205,196,.55)','rgba(78,205,196,.7)','rgba(78,205,196,.85)','rgba(78,205,196,.7)','rgba(78,205,196,.5)'],borderRadius:8,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>tip(c.raw)}}},scales:{y:{ticks:{callback:f2},grid:{color:'#1e2230'},border:{display:false},min:5000},x:{grid:{display:false},border:{display:false},title:{display:true,text:'No. of Children',color:'#6B7280',font:{size:10}}}}}});
+
+// C8 Gender Doughnut
+new Chart(document.getElementById('c8'),{type:'doughnut',data:{labels:['Male 675','Female 662'],datasets:[{data:[675,662],backgroundColor:['rgba(78,205,196,.85)','rgba(255,107,107,.85)'],borderColor:['#13161E','#13161E'],borderWidth:3,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#9CA3AF',boxWidth:10,boxHeight:10,padding:16}},tooltip:{callbacks:{label:c=>' '+c.label+' people'}}}}});
+
+// C9 Smoker x BMI
+new Chart(document.getElementById('c9'),{type:'bar',data:{labels:['Underweight','Normal','Overweight','Obese'],datasets:[{label:'Smoker',data:[18810,19942,22491,41693],backgroundColor:'rgba(255,107,107,.85)',borderRadius:6},{label:'Non-Smoker',data:[5485,7735,8226,8866],backgroundColor:'rgba(78,205,196,.85)',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#9CA3AF',boxWidth:10,boxHeight:10}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': $'+c.raw.toLocaleString()}}},scales:{y:{ticks:{callback:f2},grid:{color:'#1e2230'},border:{display:false}},x:{grid:{display:false},border:{display:false}}}}});
+
+// C10 Smoker Doughnut
+new Chart(document.getElementById('c10'),{type:'doughnut',data:{labels:['Non-Smoker 1063','Smoker 274'],datasets:[{data:[1063,274],backgroundColor:['rgba(78,205,196,.85)','rgba(255,107,107,.85)'],borderColor:['#13161E','#13161E'],borderWidth:3,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#9CA3AF',boxWidth:10,boxHeight:10,padding:12,font:{size:10}}},tooltip:{callbacks:{label:c=>' '+c.label}}}}});
+
+// CORR BARS
+const corrData=[
+  {name:'Smoker',val:0.787,color:'var(--red)'},
+  {name:'Age',   val:0.298,color:'var(--orange)'},
+  {name:'BMI',   val:0.198,color:'var(--yellow)'},
+  {name:'Children',val:0.067,color:'var(--blue)'},
+  {name:'Sex',   val:0.058,color:'var(--purple)'},
+];
+const cl=document.getElementById('corrList');
+corrData.forEach(d=>{
+  cl.innerHTML+=`<div>
+    <div class="ci-top"><span class="ci-name">${d.name}</span><span class="ci-val" style="color:${d.color}">${d.val}</span></div>
+    <div class="cbar-bg"><div class="cbar" style="width:${Math.round(d.val*100)}%;background:${d.color}"></div></div>
+  </div>`;
+});
+</script>
+</body>
+</html>
